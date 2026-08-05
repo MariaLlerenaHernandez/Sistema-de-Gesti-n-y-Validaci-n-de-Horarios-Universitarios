@@ -1,0 +1,125 @@
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5" style="max-width: 1200px;">
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
+    <div>
+      <div class="eyebrow mb-2">Periodo académico {{ periodo }}</div>
+      <h1 class="mb-0" style="font-size: 2rem;">Conflictos detectados</h1>
+      <p class="text-secondary mb-0 mt-2" style="max-width: 60ch;">
+        Listado de conflictos vigentes sobre los bloques de horario registrados para este período.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="btn btn-outline-dark px-4"
+      [disabled]="revalidando()"
+      (click)="revalidarPeriodo()"
+    >
+      @if (revalidando()) {
+        <span class="spinner-border spinner-border-sm me-2"></span>Revalidando…
+      } @else {
+        <i class="bi bi-arrow-clockwise me-2"></i>Revalidar período
+      }
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+      <i class="bi bi-exclamation-triangle"></i>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (cargando()) {
+    <div class="d-flex align-items-center gap-2 text-secondary py-5">
+      <div class="spinner-border spinner-border-sm" role="status"></div>
+      <span>Cargando conflictos…</span>
+    </div>
+  } @else if (!error()) {
+    @if (conflictos().length === 0) {
+      <div class="card border">
+        <div class="card-body text-center py-5">
+          <span class="estado-badge estado-valido mb-3">Sin conflictos</span>
+          <p class="text-secondary mb-0 mt-2">
+            No hay conflictos activos para el período {{ periodo }}.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <!-- Resumen por tipo -->
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        @for (par of conteoPorTipo() | keyvalue; track par.key) {
+          <span class="badge rounded-pill text-bg-light border dato-tabular">
+            {{ etiquetaTipo(par.key) }} · {{ par.value }}
+          </span>
+        }
+      </div>
+
+      <!-- Filtros -->
+      <div class="d-flex gap-3 flex-wrap mb-3">
+        <select class="form-select form-select-sm" style="max-width: 260px;" [(ngModel)]="filtroTipo">
+          <option value="TODOS">Todos los tipos</option>
+          @for (tipo of tiposDisponibles(); track tipo) {
+            <option [value]="tipo">{{ etiquetaTipo(tipo) }}</option>
+          }
+        </select>
+
+        <select class="form-select form-select-sm" style="max-width: 180px;" [(ngModel)]="filtroSeveridad">
+          <option value="TODAS">Toda severidad</option>
+          <option value="ALTA">Alta</option>
+          <option value="MEDIA">Media</option>
+          <option value="BAJA">Baja</option>
+        </select>
+      </div>
+
+      <!-- Tabla -->
+      <div class="card border">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="hairline-bottom">
+              <tr>
+                <th class="eyebrow">Tipo</th>
+                <th class="eyebrow">Asignatura / Paralelo</th>
+                <th class="eyebrow">Docente</th>
+                <th class="eyebrow">Espacio</th>
+                <th class="eyebrow">Día / Hora</th>
+                <th class="eyebrow">Severidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of conflictosFiltrados(); track c.conflicto_id) {
+                <tr>
+                  <td>
+                    <div class="fw-medium small">{{ etiquetaTipo(c.tipo_conflicto) }}</div>
+                    <div class="text-secondary small">{{ c.descripcion }}</div>
+                  </td>
+                  <td class="small">
+                    {{ c.nombre_asignatura }}
+                    <span class="text-secondary dato-tabular">· {{ c.codigo_paralelo }}</span>
+                  </td>
+                  <td class="small">{{ c.docente }}</td>
+                  <td class="dato-tabular small">{{ c.codigo_espacio }}</td>
+                  <td class="dato-tabular small text-nowrap">
+                    {{ c.dia_semana }} {{ c.hora_inicio }}–{{ c.hora_fin }}
+                  </td>
+                  <td>
+                    <span
+                      class="estado-badge"
+                      [class.estado-conflicto]="c.severidad === 'ALTA'"
+                      [class.estado-pendiente]="c.severidad === 'MEDIA'"
+                    >
+                      {{ c.severidad }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      @if (conflictosFiltrados().length === 0) {
+        <p class="text-secondary text-center py-4 mb-0">Ningún conflicto coincide con los filtros aplicados.</p>
+      }
+    }
+  }
+</div>
