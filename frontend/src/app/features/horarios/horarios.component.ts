@@ -102,6 +102,7 @@ export class HorariosComponent implements OnInit {
   cargandoMatriz = signal(true);
   errorMatriz = signal<string | null>(null);
   generando = signal(false);
+  vaciando = signal(false);
 
   /** Bloques ya posicionados (top/alto en px) agrupados por dia, listos para pintar. */
   bloquesPorDia = computed(() => {
@@ -160,18 +161,25 @@ export class HorariosComponent implements OnInit {
     });
   }
 
-  /** Boton "Generar horario": revalida todo el periodo contra las reglas de negocio y refresca el calendario. */
-  generarHorario(): void {
-    this.generando.set(true);
+  /** Boton "Vaciar horario": borra todos los bloques del periodo, con confirmacion previa. */
+  vaciarHorario(): void {
+    if (this.bloques().length === 0) return;
+
+    const confirmado = confirm(
+      `¿Vaciar todo el horario del período ${this.periodo}? Se eliminarán los ${this.bloques().length} bloque(s) registrados. Esta acción no se puede deshacer.`,
+    );
+    if (!confirmado) return;
+
+    this.vaciando.set(true);
     this.errorMatriz.set(null);
-    this.api.revalidarPeriodo(this.periodo).subscribe({
-      next: (respuesta) => {
-        this.bloques.set(respuesta.horario);
-        this.generando.set(false);
+    this.api.vaciarPeriodo(this.periodo).subscribe({
+      next: () => {
+        this.bloques.set([]);
+        this.vaciando.set(false);
       },
       error: (err) => {
-        this.errorMatriz.set(err?.mensajeAmigable ?? 'No se pudo generar el horario.');
-        this.generando.set(false);
+        this.errorMatriz.set(err?.mensajeAmigable ?? 'No se pudo vaciar el horario.');
+        this.vaciando.set(false);
       },
     });
   }
