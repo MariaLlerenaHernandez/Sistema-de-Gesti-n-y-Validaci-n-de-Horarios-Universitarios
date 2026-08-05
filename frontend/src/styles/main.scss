@@ -138,3 +138,118 @@ h1, h2, h3, .display-serif {
     transition-duration: 0.01ms !important;
   }
 }
+
+// =====================================================================
+// Calendario semanal (pagina de Horarios) — vista tipo agenda con
+// arrastrar-y-soltar, dias en columna y horas en fila.
+// =====================================================================
+.calendario-scroll {
+  overflow-x: auto;
+}
+
+.calendario-grid {
+  display: grid;
+  min-width: 760px;
+}
+
+.calendario-celda-encabezado {
+  border-bottom: 1px solid $hairline;
+  color: $charcoal-soft;
+}
+
+.calendario-columna-horas {
+  position: relative;
+  border-right: 1px solid $hairline;
+}
+
+.calendario-etiqueta-hora {
+  font-size: 0.7rem;
+  color: $charcoal-soft;
+  padding-top: 2px;
+  box-sizing: border-box;
+}
+
+.calendario-columna-dia {
+  position: relative;
+  border-right: 1px solid $hairline;
+  transition: background-color 0.12s ease;
+}
+
+.calendario-columna-resaltada {
+  background-color: rgba($brass, 0.08);
+}
+
+.calendario-linea-hora {
+  border-bottom: 1px solid $hairline;
+  box-sizing: border-box;
+}
+
+.calendario-bloque {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  border-radius: 6px;
+  padding: 4px 8px;
+  overflow: hidden;
+  cursor: grab;
+  border-left: 3px solid transparent;
+  background: $ivory-2;
+  box-shadow: 0 1px 3px rgba($ink-navy, 0.12);
+  transition: opacity 0.12s ease, box-shadow 0.12s ease;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.estado-valido {
+    border-left-color: $english-green;
+    background: $english-green-soft;
+  }
+  &.estado-conflicto {
+    border-left-color: $burgundy;
+    background: $burgundy-soft;
+  }
+  &.estado-pendiente {
+    border-left-color: $brass;
+    background: rgba($brass, 0.12);
+  }
+}
+
+.calendario-bloque-moviendo {
+  opacity: 0.5;
+}
+
+.calendario-bloque-hora {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: $charcoal-soft;
+}
+
+.calendario-bloque-titulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendario-bloque-detalle {
+  font-size: 0.68rem;
+  color: $charcoal-soft;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendario-punto {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 4px;
+
+  &.estado-valido { background: $english-green; }
+  &.estado-conflicto { background: $burgundy; }
+  &.estado-pendiente { background: $brass; }
+}
