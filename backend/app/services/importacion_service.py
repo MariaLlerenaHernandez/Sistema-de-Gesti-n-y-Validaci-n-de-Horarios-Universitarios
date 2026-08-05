@@ -127,9 +127,11 @@ class ImportacionService:
                 errores.append(ErrorFila(fila=i, detalle=str(e.errors()[0]["msg"])))
                 continue
 
-            existente = self.repo_asignatura.obtener_por_codigo(fila.codigo_asignatura)
+            existente = self.repo_asignatura.obtener_por_codigo_ext(fila.asignatura_id) \
+                or self.repo_asignatura.obtener_por_codigo(fila.codigo_asignatura)
             datos = dict(
                 codigo_asignatura=fila.codigo_asignatura,
+                codigo_asignatura_ext=fila.asignatura_id,
                 nombre_asignatura=fila.nombre_asignatura,
                 modalidad=fila.modalidad.value,
                 requiere_laboratorio=fila.a_bool_requiere_lab(),
@@ -162,7 +164,7 @@ class ImportacionService:
                 errores.append(ErrorFila(fila=i, detalle=str(e.errors()[0]["msg"])))
                 continue
 
-            asignatura = self.repo_asignatura.obtener_por_codigo(fila.asignatura_id)
+            asignatura = self.repo_asignatura.obtener_por_codigo_ext(fila.asignatura_id)
             if not asignatura:
                 errores.append(ErrorFila(fila=i, columna="asignatura_id", detalle=f"La asignatura '{fila.asignatura_id}' no existe."))
                 continue
@@ -203,7 +205,7 @@ class ImportacionService:
                 continue
 
             docente = self.repo_docente.obtener_por_codigo(fila.docente_id)
-            asignatura = self.repo_asignatura.obtener_por_codigo(fila.asignatura_id)
+            asignatura = self.repo_asignatura.obtener_por_codigo_ext(fila.asignatura_id)
             paralelo = self.repo_paralelo.obtener_por_codigo_ext(fila.paralelo_id)
 
             if not docente:
