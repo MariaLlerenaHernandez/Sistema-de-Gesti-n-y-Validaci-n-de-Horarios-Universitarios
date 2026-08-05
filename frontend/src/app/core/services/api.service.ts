@@ -12,6 +12,7 @@ import {
   Paralelo,
   PropuestaHorario,
   ResultadoImportacion,
+  ResultadoValidacionBloque,
 } from '../models/entidades';
 
 /**
@@ -47,6 +48,9 @@ export class ApiService {
   listarParalelos() {
     return this.http.get<Paralelo[]>(`${this.base}/paralelos`);
   }
+  listarDistributivo() {
+    return this.http.get<Distributivo[]>(`${this.base}/distributivo`);
+  }
 
   // --- Importacion masiva ------------------------------------------
   importarDocentes(filas: Record<string, unknown>[]) {
@@ -69,8 +73,17 @@ export class ApiService {
   }
 
   // --- Horarios y validacion ----------------------------------------
+  /**
+   * NOTA: el tipo de retorno asumido aqui es ResultadoValidacionBloque
+   * (bloque_id + estado_general + lista de conflictos), consistente con
+   * como quedo el stored procedure sp_ValidarBloqueHorario despues del
+   * fix del LEFT JOIN. Verifica en /docs que el schema de respuesta de
+   * tu router real coincida; si tu equipo lo devuelve con otra forma
+   * (por ejemplo un array plano de conflictos), ajusta este metodo y el
+   * modelo ResultadoValidacionBloque en core/models/entidades.ts.
+   */
   proponerHorario(propuesta: PropuestaHorario) {
-    return this.http.post<ConflictoDetalle[]>(`${this.base}/horarios/validar`, propuesta);
+    return this.http.post<ResultadoValidacionBloque>(`${this.base}/horarios/validar`, propuesta);
   }
   obtenerHorarioSemanal(periodoAcademico: string) {
     return this.http.get<BloqueHorarioSemanal[]>(`${this.base}/horarios/semanal/${periodoAcademico}`);
