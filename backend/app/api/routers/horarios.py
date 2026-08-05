@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.deps import DBSession
-from app.schemas.horario import BloqueHorarioCrear, ResultadoValidacion
+from app.schemas.horario import BloqueHorarioCrear, BloqueHorarioMover, ResultadoValidacion
 from app.services.horario_service import HorarioService
 
 router = APIRouter(prefix="/horarios", tags=["Horarios"])
@@ -15,6 +15,17 @@ def registrar_y_validar_propuesta(datos: BloqueHorarioCrear, db: DBSession):
     estado general y el detalle de los conflictos encontrados, si los hay.
     """
     return HorarioService(db).registrar_y_validar(datos)
+
+
+@router.patch("/{bloque_id}/mover", response_model=ResultadoValidacion)
+def mover_bloque(bloque_id: int, datos: BloqueHorarioMover, db: DBSession):
+    """
+    Reubica un bloque ya registrado (dia/hora y, opcionalmente, espacio) —
+    usado por el calendario semanal del frontend al arrastrar y soltar un
+    bloque a otra celda. Vuelve a validar las reglas de negocio despues
+    de moverlo.
+    """
+    return HorarioService(db).mover(bloque_id, datos)
 
 
 @router.post("/{bloque_id}/revalidar", response_model=ResultadoValidacion)
