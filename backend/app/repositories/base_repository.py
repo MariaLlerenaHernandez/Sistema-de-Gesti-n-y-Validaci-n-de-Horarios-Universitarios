@@ -4,7 +4,7 @@ evitar duplicar codigo CRUD en cada repositorio concreto.
 """
 from typing import Generic, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
 from app.database.base import Base
@@ -24,7 +24,13 @@ class BaseRepository(Generic[ModelType]):
         stmt = select(self.model)
         if solo_activos and hasattr(self.model, "activo"):
             stmt = stmt.where(self.model.activo == True)  # noqa: E712
-        stmt = stmt.offset(skip).limit(limit)
+        # SQL Server exige un ORDER BY explicito para poder usar OFFSET/LIMIT
+        # (a diferencia de PostgreSQL/MySQL/SQLite, que lo permiten sin el).
+        # Se ordena de forma generica por la(s) columna(s) de clave primaria
+        # del modelo, para que este repositorio siga sirviendo para
+        # cualquier entidad sin tener que conocer sus columnas especificas.
+        columnas_pk = inspect(self.model).primary_key
+        stmt = stmt.order_by(*columnas_pk).offset(skip).limit(limit)
         return list(self.db.execute(stmt).scalars().all())
 
     def obtener_por_campo(self, campo: str, valor) -> ModelType | None:
