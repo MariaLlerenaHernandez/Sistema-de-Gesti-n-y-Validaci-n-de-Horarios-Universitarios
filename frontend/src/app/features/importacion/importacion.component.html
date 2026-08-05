@@ -1,0 +1,185 @@
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5" style="max-width: 1200px;">
+  <!-- Encabezado -->
+  <div class="mb-4">
+    <div class="eyebrow mb-2">Carga inicial de insumos</div>
+    <h1 class="mb-2" style="font-size: 2rem;">Carga de datos desde Excel</h1>
+    <p class="text-secondary mb-0" style="max-width: 60ch;">
+      Selecciona el archivo <code>insumos_horarios.xlsx</code> con las hojas
+      <em>docentes, espacios, asignaturas, paralelos, distributivo</em> y
+      <em>disponibilidad_docente</em>. El archivo se lee aquí mismo en tu navegador;
+      solo los datos ya estructurados se envían al servidor.
+    </p>
+  </div>
+
+  <!-- Selector de archivo -->
+  <div class="card border mb-4">
+    <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span class="sello sello-sm">
+          <i class="bi bi-file-earmark-arrow-up" style="font-size: 1rem;"></i>
+        </span>
+        <div>
+          @if (nombreArchivo()) {
+            <div class="fw-medium">{{ nombreArchivo() }}</div>
+            <div class="text-secondary small">Archivo cargado. Revisa cada pestaña antes de importar.</div>
+          } @else {
+            <div class="fw-medium">Ningún archivo seleccionado</div>
+            <div class="text-secondary small">Formato aceptado: .xlsx</div>
+          }
+        </div>
+      </div>
+
+      <label class="btn btn-dark px-4 mb-0">
+        @if (leyendo()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>Leyendo…
+        } @else {
+          <i class="bi bi-upload me-2"></i>Seleccionar archivo
+        }
+        <input
+          type="file"
+          accept=".xlsx"
+          class="d-none"
+          [disabled]="leyendo()"
+          (change)="onArchivoSeleccionado($event)"
+        />
+      </label>
+    </div>
+  </div>
+
+  @if (errorLectura()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+      <i class="bi bi-exclamation-triangle"></i>
+      <span>{{ errorLectura() }}</span>
+    </div>
+  }
+
+  <!-- Pestañas por entidad -->
+  <ul class="nav nav-tabs hairline-bottom mb-0" style="border-bottom: 1px solid #dcd4c4;">
+    @for (entidad of entidades(); track entidad.clave) {
+      <li class="nav-item">
+        <button
+          type="button"
+          class="nav-link d-flex align-items-center gap-2"
+          [class.active]="pestanaActiva() === entidad.clave"
+          (click)="seleccionarPestana(entidad.clave)"
+        >
+          {{ entidad.etiqueta }}
+          @if (entidad.hoja) {
+            <span class="badge rounded-pill text-bg-light border">{{ entidad.hoja.filas.length }}</span>
+          } @else {
+            <i class="bi bi-dash-circle text-secondary" style="font-size: 0.8rem;"></i>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+
+  @if (entidadActiva; as entidad) {
+    <div class="card border border-top-0 rounded-top-0">
+      <div class="card-body p-4">
+        @if (!entidad.hoja) {
+          <div class="text-center text-secondary py-5">
+            <i class="bi bi-file-earmark-x" style="font-size: 1.5rem;"></i>
+            <p class="mt-3 mb-0">
+              No se detectó una hoja llamada <code>{{ entidad.clave }}</code> en el archivo cargado.
+            </p>
+          </div>
+        } @else {
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+            <div class="text-secondary small">
+              Hoja detectada: <span class="dato-tabular">{{ entidad.hoja.nombreDetectado }}</span>
+              · {{ entidad.hoja.filas.length }} fila(s)
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline-dark btn-sm"
+              [disabled]="entidad.importando"
+              (click)="importar(entidad)"
+            >
+              @if (entidad.importando) {
+                <span class="spinner-border spinner-border-sm me-2"></span>Importando…
+              } @else {
+                <i class="bi bi-cloud-arrow-up me-2"></i>Importar {{ entidad.hoja.filas.length }} fila(s)
+              }
+            </button>
+          </div>
+
+          <!-- Vista previa -->
+          <div class="table-responsive mb-4" style="max-height: 320px;">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="hairline-bottom">
+                <tr>
+                  @for (col of entidad.columnas; track col) {
+                    <th class="eyebrow text-nowrap">{{ col }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (fila of filasPreview(entidad); track $index) {
+                  <tr>
+                    @for (col of entidad.columnas; track col) {
+                      <td class="dato-tabular small text-nowrap">{{ fila[col] ?? '—' }}</td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+            @if (entidad.hoja.filas.length > 8) {
+              <div class="text-secondary small mt-2">
+                Mostrando 8 de {{ entidad.hoja.filas.length }} filas.
+              </div>
+            }
+          </div>
+
+          <!-- Resultado de la importacion -->
+          @if (entidad.resultado; as resultado) {
+            <div class="hairline-top pt-3">
+              <div class="d-flex gap-4 flex-wrap mb-3">
+                <div>
+                  <div class="eyebrow mb-1">Recibidas</div>
+                  <div class="dato-tabular fw-semibold">{{ resultado.filas_recibidas }}</div>
+                </div>
+                <div>
+                  <div class="eyebrow mb-1">Insertadas</div>
+                  <div class="dato-tabular fw-semibold text-success">{{ resultado.filas_insertadas }}</div>
+                </div>
+                <div>
+                  <div class="eyebrow mb-1">Actualizadas</div>
+                  <div class="dato-tabular fw-semibold">{{ resultado.filas_actualizadas }}</div>
+                </div>
+                <div>
+                  <div class="eyebrow mb-1">Con error</div>
+                  <div
+                    class="dato-tabular fw-semibold"
+                    [class.text-danger]="resultado.filas_con_error > 0"
+                  >
+                    {{ resultado.filas_con_error }}
+                  </div>
+                </div>
+              </div>
+
+              @if (resultado.errores.length > 0) {
+                <div class="alert alert-danger py-2 px-3 mb-0">
+                  <div class="fw-medium small mb-2">Filas con error:</div>
+                  <ul class="mb-0 small ps-3">
+                    @for (err of resultado.errores; track err.fila) {
+                      <li>
+                        Fila {{ err.fila }}
+                        @if (err.identificador) {
+                          (<span class="dato-tabular">{{ err.identificador }}</span>)
+                        }
+                        — {{ err.error }}
+                      </li>
+                    }
+                  </ul>
+                </div>
+              } @else {
+                <div class="estado-badge estado-valido">Todas las filas se procesaron correctamente</div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>
