@@ -1,5 +1,14 @@
 // Modelos 1:1 con los schemas Pydantic del backend y las columnas del
 // anexo de carga Excel. Mantener sincronizado si el backend cambia.
+//
+// NOTA sobre los identificadores: cada entidad tiene un ID interno
+// numerico (docente_id, espacio_id, etc. — la clave primaria real de
+// SQL Server, la que se usa en los payloads que el frontend envia al
+// backend) y, ademas, un codigo de negocio en texto que viene del Excel
+// (codigo_docente, codigo_paralelo_ext, etc. — solo para mostrarlo en
+// pantalla). Los booleanos (activo, disponible, requiere_laboratorio)
+// llegan como true/false de JSON, no como los strings 'SI'/'NO' del
+// Excel — esa conversion la hace el backend al importar.
 
 export type TipoContrato = 'TIEMPO_COMPLETO' | 'MEDIO_TIEMPO' | 'TIEMPO_PARCIAL';
 export type TipoEspacio = 'AULA' | 'LABORATORIO' | 'AULA_COMPUTO';
@@ -15,67 +24,73 @@ export type TipoConflicto =
   | 'CAPACIDAD_INSUFICIENTE';
 
 export interface Docente {
-  docente_id: string;
+  docente_id: number;
+  codigo_docente: string;
   cedula: string;
   nombres: string;
   apellidos: string;
   correo: string;
   tipo_contrato: TipoContrato;
   horas_max_semanales: number;
-  activo: 'SI' | 'NO';
+  activo: boolean;
 }
 
 export interface Espacio {
-  espacio_id: string;
+  espacio_id: number;
   codigo_espacio: string;
   nombre_espacio: string;
   tipo_espacio: TipoEspacio;
   capacidad: number;
   edificio: string;
-  piso?: string;
-  activo: 'SI' | 'NO';
+  piso?: string | null;
+  activo: boolean;
 }
 
 export interface Asignatura {
-  asignatura_id: string;
+  asignatura_id: number;
   codigo_asignatura: string;
+  codigo_asignatura_ext?: string | null;
   nombre_asignatura: string;
   modalidad: Modalidad;
-  requiere_laboratorio: 'SI' | 'NO';
-  tipo_espacio_requerido?: TipoEspacio | '';
+  requiere_laboratorio: boolean;
+  tipo_espacio_requerido?: TipoEspacio | null;
   horas_semanales: number;
   cupo_estimado: number;
-  activo: 'SI' | 'NO';
+  activo: boolean;
 }
 
 export interface Paralelo {
-  paralelo_id: string;
-  asignatura_id: string;
+  paralelo_id: number;
+  codigo_paralelo_ext: string;
+  asignatura_id: number;
   codigo_paralelo: string;
   carrera: string;
   nivel: number;
   jornada: 'Matutina' | 'Vespertina' | 'Nocturna';
   numero_estudiantes: number;
-  activo: 'SI' | 'NO';
+  activo: boolean;
 }
 
 export interface Distributivo {
-  distributivo_id: string;
-  docente_id: string;
-  asignatura_id: string;
-  paralelo_id: string;
+  distributivo_id: number;
+  codigo_distributivo_ext: string;
+  docente_id: number;
+  asignatura_id: number;
+  paralelo_id: number;
   periodo_academico: string;
   horas_asignadas: number;
-  observacion?: string;
+  observacion?: string | null;
+  activo: boolean;
 }
 
 export interface DisponibilidadDocente {
-  disponibilidad_id: string;
-  docente_id: string;
+  disponibilidad_id: number;
+  codigo_disponibilidad_ext: string;
+  docente_id: number;
   dia_semana: DiaSemana;
   hora_inicio: string;
   hora_fin: string;
-  disponible: 'SI' | 'NO';
+  disponible: boolean;
 }
 
 export interface ConflictoDetalle {
@@ -125,9 +140,18 @@ export interface ResultadoValidacionBloque {
   conflictos: ConflictoResumen[];
 }
 
+// Respuesta de POST /horarios/validar-periodo/{periodo}.
+export interface ResultadoRevalidacionPeriodo {
+  estado: string;
+  periodo_academico: string;
+  horario: BloqueHorarioSemanal[];
+}
+
+// Payload para POST /horarios/validar. distributivo_id y espacio_id son
+// los ID INTERNOS (number) — no los codigos del Excel.
 export interface PropuestaHorario {
-  distributivo_id: string;
-  espacio_id: string;
+  distributivo_id: number;
+  espacio_id: number;
   dia_semana: DiaSemana;
   hora_inicio: string;
   hora_fin: string;
@@ -138,15 +162,24 @@ export interface PropuestaHorario {
 // --- Resultado de importacion masiva --------------------------------
 export interface ErrorFilaImportacion {
   fila: number;
-  identificador: string | null;
-  error: string;
+  columna: string | null;
+  detalle: string;
 }
 
 export interface ResultadoImportacion {
   entidad: string;
-  filas_recibidas: number;
-  filas_insertadas: number;
-  filas_actualizadas: number;
+  total_filas: number;
+  filas_procesadas: number;
   filas_con_error: number;
   errores: ErrorFilaImportacion[];
+}
+
+// Payload para PATCH /horarios/{bloque_id}/mover (arrastrar-y-soltar en
+// el calendario). espacio_id es opcional: solo se envia si tambien
+// cambio el aula, no solo el dia/hora.
+export interface PropuestaMoverBloque {
+  dia_semana: DiaSemana;
+  hora_inicio: string;
+  hora_fin: string;
+  espacio_id?: number;
 }
