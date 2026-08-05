@@ -48,7 +48,10 @@ export class ApiService {
     return this.http.get<Distributivo[]>(`${this.base}/distributivo`);
   }
   listarDisponibilidad(docenteId?: number) {
-    const params = docenteId ? { docente_id: docenteId } : {};
+    const params: Record<string, number> = {};
+    if (docenteId !== undefined) {
+      params['docente_id'] = docenteId;
+    }
     return this.http.get<DisponibilidadDocente[]>(`${this.base}/disponibilidad`, { params });
   }
 
