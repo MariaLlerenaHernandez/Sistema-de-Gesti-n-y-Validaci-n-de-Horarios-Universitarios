@@ -52,23 +52,23 @@ export class ApiService {
 
   // --- Importacion masiva ------------------------------------------
   // Rutas confirmadas contra /docs del backend real: /api/v1/import/...
-  importarDocentes(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/import/docentes`, filas);
+ importarDocentes(filas: Record<string, unknown>[]) {
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/docentes`, { filas });
   }
   importarEspacios(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/import/espacios`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/espacios`, { filas });
   }
   importarAsignaturas(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/import/asignaturas`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/asignaturas`, { filas });
   }
   importarParalelos(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/import/paralelos`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/paralelos`, { filas });
   }
   importarDistributivo(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/import/distributivo`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/distributivo`, { filas });
   }
   importarDisponibilidad(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/import/disponibilidad`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/disponibilidad`, { filas });
   }
 
   // --- Horarios y validacion ----------------------------------------
