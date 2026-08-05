@@ -98,4 +98,9 @@ export class ApiService {
       {},
     );
   }
+  vaciarPeriodo(periodoAcademico: string) {
+    return this.http.delete<{ estado: string; periodo_academico: string; eliminados: number }>(
+      `${this.base}/horarios/periodo/${periodoAcademico}`,
+    );
+  }
 }
