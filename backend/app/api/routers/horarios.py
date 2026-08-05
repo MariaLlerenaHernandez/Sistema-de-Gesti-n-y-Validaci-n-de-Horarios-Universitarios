@@ -40,6 +40,13 @@ def validar_periodo_completo(periodo_academico: str, db: DBSession):
     return {"estado": "ok", "periodo_academico": periodo_academico, "horario": filas}
 
 
+@router.delete("/periodo/{periodo_academico}")
+def vaciar_periodo(periodo_academico: str, db: DBSession):
+    """Elimina todos los bloques de horario (y sus conflictos) de un periodo academico."""
+    eliminados = HorarioService(db).vaciar_periodo(periodo_academico)
+    return {"estado": "ok", "periodo_academico": periodo_academico, "eliminados": eliminados}
+
+
 @router.get("/semanal/{periodo_academico}")
 def obtener_horario_semanal(periodo_academico: str, db: DBSession):
     """Matriz semanal de bloques (para el calendario del frontend)."""
