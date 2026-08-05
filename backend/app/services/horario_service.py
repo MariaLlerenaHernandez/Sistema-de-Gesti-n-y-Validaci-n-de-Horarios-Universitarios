@@ -5,7 +5,7 @@ from app.models.bloque_horario import BloqueHorario
 from app.repositories.distributivo_repository import DistributivoRepository
 from app.repositories.espacio_repository import EspacioRepository
 from app.repositories.horario_repository import HorarioRepository
-from app.schemas.horario import BloqueHorarioCrear, ConflictoRespuesta, ResultadoValidacion
+from app.schemas.horario import BloqueHorarioCrear, BloqueHorarioMover, ConflictoRespuesta, ResultadoValidacion
 
 
 class HorarioService:
@@ -36,6 +36,25 @@ class HorarioService:
             hora_fin=datos.hora_fin,
             modalidad=datos.modalidad.value,
             periodo_academico=datos.periodo_academico,
+        )
+        return self._construir_resultado(bloque_id)
+
+    def mover(self, bloque_id: int, datos: BloqueHorarioMover) -> ResultadoValidacion:
+        """
+        Reubica un bloque existente (arrastrar-y-soltar en el calendario)
+        y lo revalida contra las mismas reglas de negocio.
+        """
+        self.obtener_bloque(bloque_id)  # 404 si no existe
+
+        if datos.espacio_id is not None and not self.repo_espacio.obtener_por_id(datos.espacio_id):
+            raise ReferenciaInvalidaError(f"El espacio_id {datos.espacio_id} no existe.")
+
+        self.repo.mover_bloque(
+            bloque_id=bloque_id,
+            dia_semana=datos.dia_semana.value,
+            hora_inicio=datos.hora_inicio,
+            hora_fin=datos.hora_fin,
+            espacio_id=datos.espacio_id,
         )
         return self._construir_resultado(bloque_id)
 
