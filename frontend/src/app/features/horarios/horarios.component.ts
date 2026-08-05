@@ -161,6 +161,22 @@ export class HorariosComponent implements OnInit {
     });
   }
 
+  /** Boton "Generar horario": revalida todo el periodo contra las reglas de negocio y refresca el calendario. */
+  generarHorario(): void {
+    this.generando.set(true);
+    this.errorMatriz.set(null);
+    this.api.revalidarPeriodo(this.periodo).subscribe({
+      next: (respuesta) => {
+        this.bloques.set(respuesta.horario);
+        this.generando.set(false);
+      },
+      error: (err) => {
+        this.errorMatriz.set(err?.mensajeAmigable ?? 'No se pudo generar el horario.');
+        this.generando.set(false);
+      },
+    });
+  }
+
   /** Boton "Vaciar horario": borra todos los bloques del periodo, con confirmacion previa. */
   vaciarHorario(): void {
     if (this.bloques().length === 0) return;
