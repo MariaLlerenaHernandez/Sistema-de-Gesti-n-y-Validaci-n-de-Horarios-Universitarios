@@ -156,10 +156,22 @@
               @if (!cargandoMatriz()) {
                 <span class="text-secondary small">{{ bloques().length }} bloque(s)</span>
               }
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                [disabled]="generando() || vaciando()"
+                (click)="generarHorario()"
+              >
+                @if (generando()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>Generando…
+                } @else {
+                  <i class="bi bi-magic me-2"></i>Generar horario
+                }
+              </button>
                <button
                 type="button"
                 class="btn btn-outline-danger btn-sm"
-                [disabled]="vaciando() || bloques().length === 0"
+                [disabled]="vaciando() || generando() || bloques().length === 0"
                 (click)="vaciarHorario()"
               >
                 @if (vaciando()) {
