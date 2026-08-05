@@ -1,9 +1,10 @@
-<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5" style="max-width: 1200px;">
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5" style="max-width: 1400px;">
   <div class="mb-4">
-    <div class="eyebrow mb-2">Periodo académico {{ periodo }}</div>
+    <div class="eyebrow mb-2">Período académico {{ periodo }}</div>
     <h1 class="mb-0" style="font-size: 2rem;">Horarios y propuestas</h1>
     <p class="text-secondary mb-0 mt-2" style="max-width: 60ch;">
       Registra una propuesta de bloque de horario y revisa de inmediato si el sistema detecta algún conflicto.
+      Arrastra un bloque del calendario para reubicarlo en otro día u hora.
     </p>
   </div>
 
@@ -15,19 +16,22 @@
           <h2 class="h6 mb-3">Nueva propuesta</h2>
 
           <div class="mb-3">
-            <label class="eyebrow mb-1 d-block">Distributivo</label>
+            <label class="eyebrow mb-1 d-block">Asignatura / paralelo / docente</label>
             <select
               class="form-select form-select-sm"
               [ngModel]="form().distributivo_id"
               (ngModelChange)="actualizarCampo('distributivo_id', $event)"
             >
               <option value="" disabled>Selecciona un registro…</option>
-              @for (d of distributivos(); track d.distributivo_id) {
-                <option [value]="d.distributivo_id">
-                  {{ d.distributivo_id }} — {{ d.docente_id }} / {{ d.asignatura_id }} / {{ d.paralelo_id }}
-                </option>
+              @for (op of opcionesDistributivo(); track op.distributivo_id) {
+                <option [value]="op.distributivo_id">{{ op.etiqueta }}</option>
               }
             </select>
+            @if (!cargandoCatalogos() && opcionesDistributivo().length === 0) {
+              <div class="form-text text-secondary small">
+                No hay distributivo cargado para {{ periodo }}. Importa esa hoja desde "Carga de datos".
+              </div>
+            }
           </div>
 
           <div class="mb-3">
@@ -142,15 +146,29 @@
       </div>
     </div>
 
-    <!-- ============================ Matriz semanal ============================ -->
+    <!-- ============================ Calendario semanal ============================ -->
     <div class="col-lg-8">
       <div class="card border">
         <div class="card-body p-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="h6 mb-0">Matriz semanal</h2>
-            @if (!cargandoMatriz()) {
-              <span class="text-secondary small">{{ bloques().length }} bloque(s) registrados</span>
-            }
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h2 class="h6 mb-0">Calendario semanal</h2>
+            <div class="d-flex align-items-center gap-3">
+              @if (!cargandoMatriz()) {
+                <span class="text-secondary small">{{ bloques().length }} bloque(s)</span>
+              }
+              <button
+                type="button"
+                class="btn btn-outline-dark btn-sm"
+                [disabled]="generando()"
+                (click)="generarHorario()"
+              >
+                @if (generando()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>Generando…
+                } @else {
+                  <i class="bi bi-arrow-repeat me-2"></i>Generar horario
+                }
+              </button>
+            </div>
           </div>
 
           @if (errorMatriz()) {
@@ -163,44 +181,70 @@
               <span>Cargando horario…</span>
             </div>
           } @else if (!errorMatriz()) {
-            @for (dia of diasSemana; track dia) {
-              <div class="mb-4">
-                <div class="eyebrow mb-2">{{ dia }}</div>
-                @if ((bloquesPorDia().get(dia) ?? []).length === 0) {
-                  <p class="text-secondary small ps-2 mb-0">Sin clases registradas.</p>
-                } @else {
-                  <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                      <tbody>
-                        @for (b of bloquesPorDia().get(dia); track b.bloque_id) {
-                          <tr>
-                            <td class="dato-tabular text-nowrap" style="width: 110px;">
-                              {{ b.hora_inicio }}–{{ b.hora_fin }}
-                            </td>
-                            <td>
-                              <div class="small fw-medium">{{ b.nombre_asignatura }}</div>
-                              <div class="text-secondary small">
-                                {{ b.docente }} · {{ b.codigo_espacio }} · {{ b.codigo_paralelo }}
-                              </div>
-                            </td>
-                            <td class="text-end" style="width: 130px;">
-                              <span
-                                class="estado-badge"
-                                [class.estado-valido]="b.estado === 'VALIDO'"
-                                [class.estado-conflicto]="b.estado === 'CONFLICTO'"
-                                [class.estado-pendiente]="b.estado === 'PENDIENTE'"
-                              >
-                                {{ b.estado }}
-                              </span>
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
+            <p class="text-secondary small mb-3">
+              <i class="bi bi-arrows-move me-1"></i>Arrastra una clase para moverla de día u hora. El sistema
+              la revalida automáticamente al soltarla.
+            </p>
+
+            <div class="calendario-scroll">
+              <div class="calendario-grid" [style.gridTemplateColumns]="'64px repeat(' + diasSemana.length + ', minmax(140px, 1fr))'">
+                <!-- Encabezado vacío sobre la columna de horas -->
+                <div class="calendario-celda-encabezado"></div>
+                @for (dia of diasSemana; track dia) {
+                  <div class="calendario-celda-encabezado eyebrow text-center py-2">{{ dia }}</div>
+                }
+
+                <!-- Columna de horas -->
+                <div class="calendario-columna-horas" [style.height.px]="alturaCalendario">
+                  @for (h of horasCalendario; track h) {
+                    <div class="calendario-etiqueta-hora dato-tabular" [style.height.px]="alturaFila">
+                      {{ h.toString().padStart(2, '0') }}:00
+                    </div>
+                  }
+                </div>
+
+                <!-- Una columna por dia, con lineas de hora de fondo + bloques arrastrables encima -->
+                @for (dia of diasSemana; track dia) {
+                  <div
+                    class="calendario-columna-dia"
+                    [class.calendario-columna-resaltada]="celdaResaltada?.dia === dia"
+                    [style.height.px]="alturaCalendario"
+                    (dragover)="onDragOverDia($event, dia)"
+                    (dragleave)="onDragLeaveDia()"
+                    (drop)="onDropEnDia($event, dia)"
+                  >
+                    @for (h of horasCalendario; track h) {
+                      <div class="calendario-linea-hora" [style.height.px]="alturaFila"></div>
+                    }
+
+                    @for (b of bloquesPorDia().get(dia); track b.bloque_id) {
+                      <div
+                        class="calendario-bloque"
+                        [class.estado-valido]="b.estado === 'VALIDO'"
+                        [class.estado-conflicto]="b.estado === 'CONFLICTO'"
+                        [class.estado-pendiente]="b.estado === 'PENDIENTE'"
+                        [class.calendario-bloque-moviendo]="moviendoBloqueId === b.bloque_id"
+                        [style.top.px]="b.top"
+                        [style.height.px]="b.alto"
+                        draggable="true"
+                        (dragstart)="onDragStart($event, b)"
+                        [title]="b.nombre_asignatura + ' · ' + b.docente + ' · ' + b.codigo_espacio"
+                      >
+                        <div class="calendario-bloque-hora dato-tabular">{{ b.hora_inicio.slice(0,5) }}–{{ b.hora_fin.slice(0,5) }}</div>
+                        <div class="calendario-bloque-titulo">{{ b.nombre_asignatura }}</div>
+                        <div class="calendario-bloque-detalle">{{ b.docente }} · {{ b.codigo_espacio }}</div>
+                      </div>
+                    }
+                  }
                 }
               </div>
-            }
+            </div>
+
+            <div class="d-flex gap-3 mt-3 small text-secondary flex-wrap">
+              <span><span class="calendario-punto estado-valido"></span> Válido</span>
+              <span><span class="calendario-punto estado-conflicto"></span> Conflicto</span>
+              <span><span class="calendario-punto estado-pendiente"></span> Pendiente</span>
+            </div>
           }
         </div>
       </div>
