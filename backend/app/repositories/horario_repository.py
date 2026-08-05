@@ -26,27 +26,19 @@ class HorarioRepository(BaseRepository[BloqueHorario]):
         periodo_academico: str,
     ) -> int:
         """
-        Inserta el bloque de horario y a continuacion ejecuta
-        sp_ValidarBloqueHorario sobre el bloque recien creado. Retorna el
-        bloque_id.
-
-        Nota de diseno: se separan a proposito el INSERT (que solo produce
-        el resultset de SCOPE_IDENTITY) de la llamada al procedimiento
-        (que produce su propio resultset de conflictos). Si se combinan en
-        un unico batch de texto, SQLAlchemy solo lee el PRIMER resultset
-        que llega, y como el procedimiento tambien devuelve una columna
-        llamada bloque_id, el bug queda oculto en vez de fallar: bastaria
-        con que alguien reordene una columna en el SP para que el codigo
-        empiece a leer datos equivocados sin ningun error visible.
+        Inserta el bloque (usando OUTPUT para obtener el ID generado en
+        la MISMA sentencia, evitando el problema de multiples result sets
+        de pyodbc con lotes INSERT;SELECT) y luego ejecuta, en una
+        llamada aparte, el procedimiento que valida las reglas de negocio.
         """
         resultado = self.db.execute(
             text(
                 """
                 INSERT INTO dbo.BloquesHorario
                     (distributivo_id, espacio_id, dia_semana, hora_inicio, hora_fin, modalidad, periodo_academico, estado)
+                OUTPUT inserted.bloque_id
                 VALUES
-                    (:distributivo_id, :espacio_id, :dia_semana, :hora_inicio, :hora_fin, :modalidad, :periodo_academico, 'PENDIENTE');
-                SELECT CAST(SCOPE_IDENTITY() AS INT) AS bloque_id;
+                    (:distributivo_id, :espacio_id, :dia_semana, :hora_inicio, :hora_fin, :modalidad, :periodo_academico, 'PENDIENTE')
                 """
             ),
             {
@@ -59,16 +51,9 @@ class HorarioRepository(BaseRepository[BloqueHorario]):
                 "periodo_academico": periodo_academico,
             },
         )
-        nuevo_id = resultado.mappings().first()["bloque_id"]
+        nuevo_id = resultado.scalar_one()
 
-        # Se ejecuta como paso independiente y se consume su resultset por
-        # completo (aunque no se use aqui), para no dejar un cursor con
-        # resultados pendientes antes del commit.
-        self.db.execute(
-            text("EXEC dbo.sp_ValidarBloqueHorario @bloque_id = :bloque_id"),
-            {"bloque_id": nuevo_id},
-        ).mappings().all()
-
+        self.db.execute(text("EXEC dbo.sp_ValidarBloqueHorario @bloque_id = :bloque_id"), {"bloque_id": nuevo_id})
         self.db.commit()
         return nuevo_id
 
