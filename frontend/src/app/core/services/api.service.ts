@@ -19,16 +19,14 @@ import {
  * Punto unico de acceso a la API del backend. Cada entidad tiene su metodo
  * de listado y su metodo de importacion masiva; horarios y conflictos
  * exponen las operaciones de validacion.
- */
-/**
- * IMPORTANTE: las rutas usadas aqui (ej. `/importacion/docentes`,
- * `/horarios/validar-periodo/...`) son las que definimos como referencia.
- * Antes de usar este servicio, abre `http://127.0.0.1:8000/docs` en tu
- * backend real y confirma que cada ruta coincide exactamente (metodo,
- * path y parametros). Si tu equipo nombro los endpoints distinto (por
- * ejemplo `/docentes/import` en vez de `/importacion/docentes`), ajusta
- * las rutas de este archivo — es el UNICO lugar del frontend donde hay
- * que tocarlo.
+ *
+ * Rutas verificadas contra /docs del backend real (04/08/2026):
+ * base = http://127.0.0.1:8000/api/v1
+ * - import/docentes, import/espacios, import/asignaturas, import/paralelos,
+ *   import/distributivo, import/disponibilidad
+ * - horarios/validar, horarios/{bloque_id}/revalidar,
+ *   horarios/validar-periodo/{periodo_academico},
+ *   horarios/semanal/{periodo_academico}, horarios/conflictos
  */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -53,23 +51,24 @@ export class ApiService {
   }
 
   // --- Importacion masiva ------------------------------------------
+  // Rutas confirmadas contra /docs del backend real: /api/v1/import/...
   importarDocentes(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/importacion/docentes`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/docentes`, filas);
   }
   importarEspacios(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/importacion/espacios`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/espacios`, filas);
   }
   importarAsignaturas(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/importacion/asignaturas`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/asignaturas`, filas);
   }
   importarParalelos(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/importacion/paralelos`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/paralelos`, filas);
   }
   importarDistributivo(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/importacion/distributivo`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/distributivo`, filas);
   }
   importarDisponibilidad(filas: Record<string, unknown>[]) {
-    return this.http.post<ResultadoImportacion>(`${this.base}/importacion/disponibilidad`, filas);
+    return this.http.post<ResultadoImportacion>(`${this.base}/import/disponibilidad`, filas);
   }
 
   // --- Horarios y validacion ----------------------------------------
