@@ -136,16 +136,12 @@
             <div class="hairline-top pt-3">
               <div class="d-flex gap-4 flex-wrap mb-3">
                 <div>
-                  <div class="eyebrow mb-1">Recibidas</div>
-                  <div class="dato-tabular fw-semibold">{{ resultado.filas_recibidas }}</div>
+                  <div class="eyebrow mb-1">Total en el archivo</div>
+                  <div class="dato-tabular fw-semibold">{{ resultado.total_filas }}</div>
                 </div>
                 <div>
-                  <div class="eyebrow mb-1">Insertadas</div>
-                  <div class="dato-tabular fw-semibold text-success">{{ resultado.filas_insertadas }}</div>
-                </div>
-                <div>
-                  <div class="eyebrow mb-1">Actualizadas</div>
-                  <div class="dato-tabular fw-semibold">{{ resultado.filas_actualizadas }}</div>
+                  <div class="eyebrow mb-1">Procesadas</div>
+                  <div class="dato-tabular fw-semibold text-success">{{ resultado.filas_procesadas }}</div>
                 </div>
                 <div>
                   <div class="eyebrow mb-1">Con error</div>
@@ -165,10 +161,10 @@
                     @for (err of resultado.errores; track err.fila) {
                       <li>
                         Fila {{ err.fila }}
-                        @if (err.identificador) {
-                          (<span class="dato-tabular">{{ err.identificador }}</span>)
+                        @if (err.columna) {
+                          (<span class="dato-tabular">{{ err.columna }}</span>)
                         }
-                        — {{ err.error }}
+                        — {{ err.detalle }}
                       </li>
                     }
                   </ul>
