@@ -69,6 +69,10 @@ class HorarioService:
         self.repo.validar_periodo(periodo_academico)
         return self.repo.obtener_horario_semanal(periodo_academico)
 
+    def vaciar_periodo(self, periodo_academico: str) -> int:
+        """Borra todos los bloques (y sus conflictos) de un periodo. Devuelve cuantos se eliminaron."""
+        return self.repo.vaciar_periodo(periodo_academico)
+
     def obtener_bloque(self, bloque_id: int) -> BloqueHorario:
         bloque = self.repo.obtener_por_id(bloque_id)
         if not bloque:
