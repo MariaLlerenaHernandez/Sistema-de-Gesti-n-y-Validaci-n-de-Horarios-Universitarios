@@ -11,6 +11,7 @@ class Asignatura(Base):
 
     asignatura_id: Mapped[int] = mapped_column(primary_key=True)
     codigo_asignatura: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    codigo_asignatura_ext: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
     nombre_asignatura: Mapped[str] = mapped_column(String(150), nullable=False)
     modalidad: Mapped[str] = mapped_column(String(20), nullable=False)
     requiere_laboratorio: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
