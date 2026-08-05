@@ -127,6 +127,37 @@ class HorarioRepository(BaseRepository[BloqueHorario]):
         )
         self.db.commit()
 
+    def vaciar_periodo(self, periodo_academico: str) -> int:
+        """
+        Elimina todos los bloques de horario (y sus conflictos asociados,
+        via ON DELETE CASCADE) de un periodo academico.
+
+        La tabla tiene un trigger (trg_BloquesHorario_Delete) que impide
+        borrar directamente un bloque en estado VALIDO, para evitar
+        borrados accidentales. Por eso primero se "des-valida" (estado ->
+        PENDIENTE) todo el periodo y luego se borra — asi el trigger no
+        bloquea nada, y sigue protegiendo los borrados individuales
+        normales del resto del sistema.
+        """
+        total = self.db.execute(
+            text("SELECT COUNT(*) FROM dbo.BloquesHorario WHERE periodo_academico = :periodo"),
+            {"periodo": periodo_academico},
+        ).scalar_one()
+
+        if total == 0:
+            return 0
+
+        self.db.execute(
+            text("UPDATE dbo.BloquesHorario SET estado = 'PENDIENTE' WHERE periodo_academico = :periodo"),
+            {"periodo": periodo_academico},
+        )
+        self.db.execute(
+            text("DELETE FROM dbo.BloquesHorario WHERE periodo_academico = :periodo"),
+            {"periodo": periodo_academico},
+        )
+        self.db.commit()
+        return total
+
     def obtener_conflictos_de_bloque(self, bloque_id: int) -> list[Conflicto]:
         return list(
             self.db.query(Conflicto).filter(Conflicto.bloque_id == bloque_id).all()
