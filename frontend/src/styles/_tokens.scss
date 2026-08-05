@@ -1,0 +1,60 @@
+// =====================================================================
+// Sistema de Horarios Universitarios — Tokens de diseño
+// Identidad: institucional, seria, "sello de diploma" — no plantilla.
+// =====================================================================
+
+// --- Paleta ---------------------------------------------------------
+$ink-navy:      #0B1B33; // base institucional
+$ink-navy-2:    #142A4D; // navy un poco mas claro, para superficies
+$brass:         #B08D57; // acento principal (bronce envejecido)
+$brass-light:   #D4B888;
+$ivory:         #F7F5F0; // fondo general
+$ivory-2:       #FFFFFF; // tarjetas / superficies
+$charcoal:      #1C2321; // texto principal
+$charcoal-soft: #4A5259; // texto secundario
+$burgundy:      #6E1423; // reservado EXCLUSIVAMENTE para conflictos/alertas
+$burgundy-soft: #F4E4E7;
+$english-green: #2F5233; // estados validos / exito
+$english-green-soft: #E5EDE6;
+$hairline:      #DCD4C4; // lineas finas en tono bronce apagado
+
+// --- Tipografia ------------------------------------------------------
+$font-display: 'Fraunces', Georgia, serif;
+$font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+// --- Overrides de variables de Bootstrap (deben ir ANTES del import) -
+$primary:       $ink-navy;
+$secondary:     $brass;
+$success:       $english-green;
+$danger:        $burgundy;
+$warning:       $brass;
+$light:         $ivory;
+$dark:          $charcoal;
+
+$body-bg:       $ivory;
+$body-color:    $charcoal;
+$font-family-base: $font-body;
+$font-family-sans-serif: $font-body;
+$headings-font-family: $font-display;
+$headings-font-weight: 600;
+$headings-color: $ink-navy;
+
+$border-radius:       0.25rem;
+$border-radius-sm:    0.2rem;
+$border-radius-lg:    0.3rem;
+$border-color:        $hairline;
+
+$card-border-color:   $hairline;
+$card-border-radius:  0.25rem;
+$card-box-shadow:     none;
+
+$btn-border-radius:   0.2rem;
+$btn-font-weight:     500;
+
+$table-border-color:  $hairline;
+
+$link-color:          $ink-navy;
+$link-hover-color:    $brass;
+
+@import 'bootstrap/scss/bootstrap';
