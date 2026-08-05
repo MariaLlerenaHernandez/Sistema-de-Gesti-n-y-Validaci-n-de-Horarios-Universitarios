@@ -112,6 +112,19 @@ export interface BloqueHorarioSemanal {
   nombre_espacio: string;
 }
 
+export interface ConflictoResumen {
+  conflicto_id: number;
+  tipo_conflicto: TipoConflicto;
+  descripcion: string;
+  severidad: 'ALTA' | 'MEDIA' | 'BAJA';
+}
+
+export interface ResultadoValidacionBloque {
+  bloque_id: number;
+  estado_general: EstadoBloque;
+  conflictos: ConflictoResumen[];
+}
+
 export interface PropuestaHorario {
   distributivo_id: string;
   espacio_id: string;

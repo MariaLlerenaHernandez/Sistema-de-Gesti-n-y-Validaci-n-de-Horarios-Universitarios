@@ -1,0 +1,209 @@
+<div class="container-fluid px-4 px-lg-5 py-4 py-lg-5" style="max-width: 1200px;">
+  <div class="mb-4">
+    <div class="eyebrow mb-2">Periodo académico {{ periodo }}</div>
+    <h1 class="mb-0" style="font-size: 2rem;">Horarios y propuestas</h1>
+    <p class="text-secondary mb-0 mt-2" style="max-width: 60ch;">
+      Registra una propuesta de bloque de horario y revisa de inmediato si el sistema detecta algún conflicto.
+    </p>
+  </div>
+
+  <div class="row g-4">
+    <!-- ============================ Formulario de propuesta ============================ -->
+    <div class="col-lg-4">
+      <div class="card border">
+        <div class="card-body p-4">
+          <h2 class="h6 mb-3">Nueva propuesta</h2>
+
+          <div class="mb-3">
+            <label class="eyebrow mb-1 d-block">Distributivo</label>
+            <select
+              class="form-select form-select-sm"
+              [ngModel]="form().distributivo_id"
+              (ngModelChange)="actualizarCampo('distributivo_id', $event)"
+            >
+              <option value="" disabled>Selecciona un registro…</option>
+              @for (d of distributivos(); track d.distributivo_id) {
+                <option [value]="d.distributivo_id">
+                  {{ d.distributivo_id }} — {{ d.docente_id }} / {{ d.asignatura_id }} / {{ d.paralelo_id }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="eyebrow mb-1 d-block">Espacio físico</label>
+            <select
+              class="form-select form-select-sm"
+              [ngModel]="form().espacio_id"
+              (ngModelChange)="actualizarCampo('espacio_id', $event)"
+            >
+              <option value="" disabled>Selecciona un espacio…</option>
+              @for (e of espacios(); track e.espacio_id) {
+                <option [value]="e.espacio_id">{{ e.codigo_espacio }} — {{ e.nombre_espacio }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-7">
+              <label class="eyebrow mb-1 d-block">Día</label>
+              <select
+                class="form-select form-select-sm"
+                [ngModel]="form().dia_semana"
+                (ngModelChange)="actualizarCampo('dia_semana', $event)"
+              >
+                @for (dia of diasSemana; track dia) {
+                  <option [value]="dia">{{ dia }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-5">
+              <label class="eyebrow mb-1 d-block">Modalidad</label>
+              <select
+                class="form-select form-select-sm"
+                [ngModel]="form().modalidad"
+                (ngModelChange)="actualizarCampo('modalidad', $event)"
+              >
+                @for (m of modalidades; track m) {
+                  <option [value]="m">{{ m }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-4">
+            <div class="col-6">
+              <label class="eyebrow mb-1 d-block">Hora inicio</label>
+              <input
+                type="time"
+                class="form-control form-control-sm dato-tabular"
+                [ngModel]="form().hora_inicio"
+                (ngModelChange)="actualizarCampo('hora_inicio', $event)"
+              />
+            </div>
+            <div class="col-6">
+              <label class="eyebrow mb-1 d-block">Hora fin</label>
+              <input
+                type="time"
+                class="form-control form-control-sm dato-tabular"
+                [ngModel]="form().hora_fin"
+                (ngModelChange)="actualizarCampo('hora_fin', $event)"
+              />
+            </div>
+          </div>
+
+          @if (errorFormulario()) {
+            <div class="alert alert-danger py-2 px-3 small mb-3">{{ errorFormulario() }}</div>
+          }
+
+          <button
+            type="button"
+            class="btn btn-dark w-100"
+            [disabled]="enviando()"
+            (click)="enviarPropuesta()"
+          >
+            @if (enviando()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>Validando…
+            } @else {
+              <i class="bi bi-send-check me-2"></i>Registrar y validar
+            }
+          </button>
+        </div>
+
+        @if (resultado(); as r) {
+          <div class="card-footer bg-transparent hairline-top p-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <span
+                class="estado-badge"
+                [class.estado-valido]="r.estado_general === 'VALIDO'"
+                [class.estado-conflicto]="r.estado_general === 'CONFLICTO'"
+              >
+                {{ r.estado_general }}
+              </span>
+              <span class="text-secondary small dato-tabular">bloque #{{ r.bloque_id }}</span>
+            </div>
+
+            @if (r.conflictos.length > 0) {
+              <ul class="ps-3 mb-0 small">
+                @for (c of r.conflictos; track c.conflicto_id) {
+                  <li class="mb-1">
+                    <span class="fw-medium">{{ etiquetaTipo(c.tipo_conflicto) }}</span
+                    >: {{ c.descripcion }}
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="text-secondary small mb-0">
+                Sin conflictos detectados. El bloque quedó registrado como válido.
+              </p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ============================ Matriz semanal ============================ -->
+    <div class="col-lg-8">
+      <div class="card border">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 mb-0">Matriz semanal</h2>
+            @if (!cargandoMatriz()) {
+              <span class="text-secondary small">{{ bloques().length }} bloque(s) registrados</span>
+            }
+          </div>
+
+          @if (errorMatriz()) {
+            <div class="alert alert-danger py-2 px-3 small">{{ errorMatriz() }}</div>
+          }
+
+          @if (cargandoMatriz()) {
+            <div class="d-flex align-items-center gap-2 text-secondary py-5 justify-content-center">
+              <div class="spinner-border spinner-border-sm"></div>
+              <span>Cargando horario…</span>
+            </div>
+          } @else if (!errorMatriz()) {
+            @for (dia of diasSemana; track dia) {
+              <div class="mb-4">
+                <div class="eyebrow mb-2">{{ dia }}</div>
+                @if ((bloquesPorDia().get(dia) ?? []).length === 0) {
+                  <p class="text-secondary small ps-2 mb-0">Sin clases registradas.</p>
+                } @else {
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                      <tbody>
+                        @for (b of bloquesPorDia().get(dia); track b.bloque_id) {
+                          <tr>
+                            <td class="dato-tabular text-nowrap" style="width: 110px;">
+                              {{ b.hora_inicio }}–{{ b.hora_fin }}
+                            </td>
+                            <td>
+                              <div class="small fw-medium">{{ b.nombre_asignatura }}</div>
+                              <div class="text-secondary small">
+                                {{ b.docente }} · {{ b.codigo_espacio }} · {{ b.codigo_paralelo }}
+                              </div>
+                            </td>
+                            <td class="text-end" style="width: 130px;">
+                              <span
+                                class="estado-badge"
+                                [class.estado-valido]="b.estado === 'VALIDO'"
+                                [class.estado-conflicto]="b.estado === 'CONFLICTO'"
+                                [class.estado-pendiente]="b.estado === 'PENDIENTE'"
+                              >
+                                {{ b.estado }}
+                              </span>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
