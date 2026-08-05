@@ -57,6 +57,65 @@ class HorarioRepository(BaseRepository[BloqueHorario]):
         self.db.commit()
         return nuevo_id
 
+    def mover_bloque(
+        self,
+        bloque_id: int,
+        dia_semana: str,
+        hora_inicio,
+        hora_fin,
+        espacio_id: int | None = None,
+    ) -> None:
+        """
+        Reubica un bloque ya existente (usado por arrastrar-y-soltar en
+        el calendario del frontend) y vuelve a validarlo. Deja el estado
+        en PENDIENTE antes de revalidar para que, si el nuevo horario ya
+        no tiene conflicto, sp_ValidarBloqueHorario lo pueda marcar VALIDO
+        limpiamente (y no arrastre un estado CONFLICTO viejo).
+        """
+        if espacio_id is not None:
+            self.db.execute(
+                text(
+                    """
+                    UPDATE dbo.BloquesHorario
+                    SET dia_semana = :dia_semana,
+                        hora_inicio = :hora_inicio,
+                        hora_fin = :hora_fin,
+                        espacio_id = :espacio_id,
+                        estado = 'PENDIENTE'
+                    WHERE bloque_id = :bloque_id
+                    """
+                ),
+                {
+                    "dia_semana": dia_semana,
+                    "hora_inicio": hora_inicio,
+                    "hora_fin": hora_fin,
+                    "espacio_id": espacio_id,
+                    "bloque_id": bloque_id,
+                },
+            )
+        else:
+            self.db.execute(
+                text(
+                    """
+                    UPDATE dbo.BloquesHorario
+                    SET dia_semana = :dia_semana,
+                        hora_inicio = :hora_inicio,
+                        hora_fin = :hora_fin,
+                        estado = 'PENDIENTE'
+                    WHERE bloque_id = :bloque_id
+                    """
+                ),
+                {
+                    "dia_semana": dia_semana,
+                    "hora_inicio": hora_inicio,
+                    "hora_fin": hora_fin,
+                    "bloque_id": bloque_id,
+                },
+            )
+
+        self.db.execute(text("EXEC dbo.sp_ValidarBloqueHorario @bloque_id = :bloque_id"), {"bloque_id": bloque_id})
+        self.db.commit()
+
     def revalidar_bloque(self, bloque_id: int) -> None:
         self.db.execute(text("EXEC dbo.sp_ValidarBloqueHorario @bloque_id = :bloque_id"), {"bloque_id": bloque_id})
         self.db.commit()
