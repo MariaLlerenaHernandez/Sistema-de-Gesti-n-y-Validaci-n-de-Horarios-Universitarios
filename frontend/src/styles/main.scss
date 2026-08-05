@@ -1,0 +1,140 @@
+@use 'tokens' as *;
+
+// =====================================================================
+// Base
+// =====================================================================
+html, body {
+  height: 100%;
+}
+
+body {
+  font-feature-settings: 'ss01' on;
+  -webkit-font-smoothing: antialiased;
+}
+
+// Los titulos usan letter-spacing negativo sutil, tipico de tipografia
+// editorial/institucional de alta gama.
+h1, h2, h3, .display-serif {
+  letter-spacing: -0.01em;
+}
+
+// Eyebrow: pequena etiqueta en mayusculas sobre un titulo. Se usa con
+// moderacion, solo donde realmente aporta jerarquia (no decorativo).
+.eyebrow {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $brass;
+  font-weight: 500;
+}
+
+// Datos tabulares (horas, codigos) siempre en monoespaciada: le da
+// precision de "registro academico" a la lectura de horarios.
+.dato-tabular {
+  font-family: $font-mono;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+// =====================================================================
+// Hairlines — el recurso visual principal en vez de sombras
+// =====================================================================
+.hairline-top    { border-top: 1px solid $hairline; }
+.hairline-bottom { border-bottom: 1px solid $hairline; }
+
+.card {
+  box-shadow: none;
+}
+
+// =====================================================================
+// Sello institucional (elemento de firma)
+// =====================================================================
+.sello {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid $brass;
+  border-radius: 50%;
+  color: $brass;
+  font-family: $font-display;
+  font-weight: 600;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba($brass, 0.4);
+    border-radius: 50%;
+  }
+}
+
+.sello-sm { width: 2.25rem; height: 2.25rem; font-size: 0.85rem; }
+.sello-lg { width: 4.5rem;  height: 4.5rem;  font-size: 1.5rem; }
+
+// =====================================================================
+// Estados de conflicto / validez — semanticos, nunca decorativos
+// =====================================================================
+.estado-badge {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+}
+
+.estado-valido {
+  background: $english-green-soft;
+  color: $english-green;
+  &::before { background: $english-green; }
+}
+
+.estado-conflicto {
+  background: $burgundy-soft;
+  color: $burgundy;
+  &::before { background: $burgundy; }
+}
+
+.estado-pendiente {
+  background: rgba($brass, 0.12);
+  color: darken($brass, 15%);
+  &::before { background: $brass; }
+}
+
+// =====================================================================
+// Scrollbar discreto (evita el ruido visual de scrollbars por defecto)
+// =====================================================================
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: $hairline;
+  border-radius: 4px;
+  &:hover { background: $brass; }
+}
+
+// =====================================================================
+// Accesibilidad: foco de teclado visible, respeta motion reducido
+// =====================================================================
+:focus-visible {
+  outline: 2px solid $brass;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
