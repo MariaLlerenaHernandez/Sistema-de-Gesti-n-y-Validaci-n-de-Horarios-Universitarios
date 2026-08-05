@@ -24,6 +24,26 @@ class BloqueHorarioCrear(BaseModel):
         return self
 
 
+class BloqueHorarioMover(BaseModel):
+    """
+    Payload para reubicar un bloque ya existente (arrastrar-y-soltar en
+    el calendario semanal del frontend): cambia dia/hora y, opcionalmente,
+    el espacio fisico. Vuelve a correr sp_ValidarBloqueHorario despues
+    de mover, para que el estado (VALIDO/CONFLICTO) quede actualizado.
+    """
+
+    dia_semana: DiaSemana
+    hora_inicio: time
+    hora_fin: time
+    espacio_id: int | None = None
+
+    @model_validator(mode="after")
+    def validar_horas(self):
+        if self.hora_fin <= self.hora_inicio:
+            raise ValueError("hora_fin debe ser mayor que hora_inicio.")
+        return self
+
+
 class ConflictoRespuesta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
