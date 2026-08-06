@@ -251,3 +251,51 @@
                   }
                 </div>
 
+                <!-- Una columna por dia, con lineas de hora de fondo + bloques arrastrables encima -->
+                @for (dia of diasSemana; track dia) {
+                  <div
+                    class="calendario-columna-dia"
+                    [class.calendario-columna-resaltada]="celdaResaltada?.dia === dia"
+                    [style.height.px]="alturaCalendario"
+                    (dragover)="onDragOverDia($event, dia)"
+                    (dragleave)="onDragLeaveDia()"
+                    (drop)="onDropEnDia($event, dia)"
+                  >
+                    @for (h of horasCalendario; track h) {
+                      <div class="calendario-linea-hora" [style.height.px]="alturaFila"></div>
+                    }
+
+                    @for (b of bloquesPorDia().get(dia); track b.bloque_id) {
+                      <div
+                        class="calendario-bloque"
+                        [class.estado-valido]="b.estado === 'VALIDO'"
+                        [class.estado-conflicto]="b.estado === 'CONFLICTO'"
+                        [class.estado-pendiente]="b.estado === 'PENDIENTE'"
+                        [class.calendario-bloque-moviendo]="moviendoBloqueId === b.bloque_id"
+                        [style.top.px]="b.top"
+                        [style.height.px]="b.alto"
+                        draggable="true"
+                        (dragstart)="onDragStart($event, b)"
+                        [title]="b.nombre_asignatura + ' · ' + b.docente + ' · ' + b.codigo_espacio"
+                      >
+                        <div class="calendario-bloque-hora dato-tabular">{{ b.hora_inicio.slice(0,5) }}–{{ b.hora_fin.slice(0,5) }}</div>
+                        <div class="calendario-bloque-titulo">{{ b.nombre_asignatura }}</div>
+                        <div class="calendario-bloque-detalle">{{ b.docente }} · {{ b.codigo_espacio }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-3 small text-secondary flex-wrap">
+              <span><span class="calendario-punto estado-valido"></span> Válido</span>
+              <span><span class="calendario-punto estado-conflicto"></span> Conflicto</span>
+              <span><span class="calendario-punto estado-pendiente"></span> Pendiente</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
