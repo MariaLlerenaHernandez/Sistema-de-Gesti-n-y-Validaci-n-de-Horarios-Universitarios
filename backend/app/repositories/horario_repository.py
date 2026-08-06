@@ -163,6 +163,12 @@ class HorarioRepository(BaseRepository[BloqueHorario]):
             self.db.query(Conflicto).filter(Conflicto.bloque_id == bloque_id).all()
         )
 
+    def obtener_bloques_periodo_orm(self, periodo_academico: str) -> list[BloqueHorario]:
+        """Bloques crudos (ORM) de un periodo, usados por el generador automatico para saber que ya esta ocupado."""
+        return list(
+            self.db.query(BloqueHorario).filter(BloqueHorario.periodo_academico == periodo_academico).all()
+        )
+
     def obtener_horario_semanal(self, periodo_academico: str) -> list[dict]:
         resultado = self.db.execute(
             text("SELECT * FROM dbo.vw_HorarioSemanal WHERE periodo_academico = :periodo ORDER BY dia_semana, hora_inicio"),
