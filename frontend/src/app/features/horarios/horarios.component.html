@@ -16,22 +16,52 @@
           <h2 class="h6 mb-3">Nueva propuesta</h2>
 
           <div class="mb-3">
-            <label class="eyebrow mb-1 d-block">Asignatura / paralelo / docente</label>
+            <label class="eyebrow mb-1 d-block">Docente</label>
             <select
               class="form-select form-select-sm"
-              [ngModel]="form().distributivo_id"
-              (ngModelChange)="actualizarCampo('distributivo_id', $event)"
+              [ngModel]="form().docente_id"
+              (ngModelChange)="seleccionarDocente($event)"
             >
-              <option value="" disabled>Selecciona un registro…</option>
-              @for (op of opcionesDistributivo(); track op.distributivo_id) {
-                <option [value]="op.distributivo_id">{{ op.etiqueta }}</option>
+              <option value="" disabled>Selecciona un docente…</option>
+              @for (op of opcionesDocentesDistributivo(); track op.id) {
+                <option [value]="op.id">{{ op.etiqueta }}</option>
               }
             </select>
-            @if (!cargandoCatalogos() && opcionesDistributivo().length === 0) {
+            @if (!cargandoCatalogos() && opcionesDocentesDistributivo().length === 0) {
               <div class="form-text text-secondary small">
                 No hay distributivo cargado para {{ periodo }}. Importa esa hoja desde "Carga de datos".
               </div>
             }
+          </div>
+
+          <div class="mb-3">
+            <label class="eyebrow mb-1 d-block">Asignatura</label>
+            <select
+              class="form-select form-select-sm"
+              [ngModel]="form().asignatura_id"
+              (ngModelChange)="seleccionarAsignatura($event)"
+              [disabled]="!form().docente_id"
+            >
+              <option value="" disabled>Selecciona una asignatura…</option>
+              @for (op of opcionesAsignaturasDelDocente(); track op.id) {
+                <option [value]="op.id">{{ op.etiqueta }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="eyebrow mb-1 d-block">Paralelo</label>
+            <select
+              class="form-select form-select-sm"
+              [ngModel]="form().paralelo_id"
+              (ngModelChange)="seleccionarParalelo($event)"
+              [disabled]="!form().asignatura_id"
+            >
+              <option value="" disabled>Selecciona un paralelo…</option>
+              @for (op of opcionesParalelosDeAsignatura(); track op.id) {
+                <option [value]="op.id">{{ op.etiqueta }}</option>
+              }
+            </select>
           </div>
 
           <div class="mb-3">
@@ -158,20 +188,20 @@
               }
               <button
                 type="button"
-                class="btn btn-outline-primary btn-sm"
-                [disabled]="generando() || vaciando()"
+                class="btn btn-outline-dark btn-sm"
+                [disabled]="generando()"
                 (click)="generarHorario()"
               >
                 @if (generando()) {
                   <span class="spinner-border spinner-border-sm me-2"></span>Generando…
                 } @else {
-                  <i class="bi bi-magic me-2"></i>Generar horario
+                  <i class="bi bi-arrow-repeat me-2"></i>Generar horario
                 }
               </button>
-               <button
+              <button
                 type="button"
                 class="btn btn-outline-danger btn-sm"
-                [disabled]="vaciando() || generando() || bloques().length === 0"
+                [disabled]="vaciando() || bloques().length === 0"
                 (click)="vaciarHorario()"
               >
                 @if (vaciando()) {
