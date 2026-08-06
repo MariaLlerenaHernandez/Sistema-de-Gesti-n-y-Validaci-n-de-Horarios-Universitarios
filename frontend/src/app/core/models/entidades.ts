@@ -183,3 +183,18 @@ export interface PropuestaMoverBloque {
   hora_fin: string;
   espacio_id?: number;
 }
+
+// Respuesta de POST /horarios/generar/{periodo} (generador automatico).
+export interface FilaSinAgendar {
+  codigo_distributivo_ext: string;
+  motivo: string;
+}
+
+export interface ResultadoGeneracion {
+  estado: string;
+  periodo_academico: string;
+  programados: number;
+  ya_existian: number;
+  sin_agendar: FilaSinAgendar[];
+  horario: BloqueHorarioSemanal[];
+}
