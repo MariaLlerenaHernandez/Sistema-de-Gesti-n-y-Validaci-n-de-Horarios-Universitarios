@@ -40,6 +40,19 @@ def validar_periodo_completo(periodo_academico: str, db: DBSession):
     return {"estado": "ok", "periodo_academico": periodo_academico, "horario": filas}
 
 
+@router.post("/generar/{periodo_academico}")
+def generar_horario_automatico(periodo_academico: str, db: DBSession):
+    """
+    Genera automaticamente los bloques de horario para todo el
+    distributivo del periodo que aun no tenga uno (por ejemplo, recien
+    importado desde Excel), respetando disponibilidad de cada docente y
+    compatibilidad de espacios. Los distributivo que ya tenian un bloque
+    no se tocan.
+    """
+    resultado = HorarioService(db).generar_automatico(periodo_academico)
+    return {"estado": "ok", "periodo_academico": periodo_academico, **resultado}
+
+
 @router.delete("/periodo/{periodo_academico}")
 def vaciar_periodo(periodo_academico: str, db: DBSession):
     """Elimina todos los bloques de horario (y sus conflictos) de un periodo academico."""
