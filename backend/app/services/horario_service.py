@@ -73,6 +73,24 @@ class HorarioService:
         """Borra todos los bloques (y sus conflictos) de un periodo. Devuelve cuantos se eliminaron."""
         return self.repo.vaciar_periodo(periodo_academico)
 
+    def generar_automatico(self, periodo_academico: str) -> dict:
+        """
+        Genera automaticamente los bloques de horario para todo el
+        distributivo del periodo que todavia no tiene uno, usando
+        GeneradorHorarioService (respeta disponibilidad del docente y
+        compatibilidad de espacio, y cada bloque se valida en la base
+        de datos igual que uno registrado a mano).
+        """
+        from app.services.generador_horario_service import GeneradorHorarioService
+
+        resultado = GeneradorHorarioService(self.db).generar(periodo_academico)
+        return {
+            "programados": resultado.programados,
+            "ya_existian": resultado.ya_existian,
+            "sin_agendar": resultado.sin_agendar,
+            "horario": self.obtener_horario_semanal(periodo_academico),
+        }
+
     def obtener_bloque(self, bloque_id: int) -> BloqueHorario:
         bloque = self.repo.obtener_por_id(bloque_id)
         if not bloque:
