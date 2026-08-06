@@ -156,6 +156,7 @@ export class HorariosComponent implements OnInit {
   errorMatriz = signal<string | null>(null);
   generando = signal(false);
   vaciando = signal(false);
+  mensajeGeneracion = signal<string | null>(null);
 
   /** Bloques ya posicionados (top/alto en px) agrupados por dia, listos para pintar. */
   bloquesPorDia = computed(() => {
@@ -214,14 +215,41 @@ export class HorariosComponent implements OnInit {
     });
   }
 
-  /** Boton "Generar horario": revalida todo el periodo contra las reglas de negocio y refresca el calendario. */
+  /**
+   * Boton "Generar horario": crea automaticamente los bloques para todo
+   * el distributivo del periodo que todavia no tiene uno (por ejemplo,
+   * recien importado desde Excel), respetando disponibilidad de cada
+   * docente y compatibilidad de espacios. Los bloques que ya existian
+   * no se tocan.
+   */
   generarHorario(): void {
     this.generando.set(true);
     this.errorMatriz.set(null);
-    this.api.revalidarPeriodo(this.periodo).subscribe({
+    this.mensajeGeneracion.set(null);
+    this.api.generarAutomatico(this.periodo).subscribe({
       next: (respuesta) => {
         this.bloques.set(respuesta.horario);
         this.generando.set(false);
+
+        const partes: string[] = [];
+        if (respuesta.programados > 0) {
+          partes.push(`${respuesta.programados} bloque(s) nuevo(s) generado(s)`);
+        }
+        if (respuesta.ya_existian > 0) {
+          partes.push(`${respuesta.ya_existian} ya existían`);
+        }
+        if (respuesta.sin_agendar.length > 0) {
+          partes.push(`${respuesta.sin_agendar.length} no se pudieron agendar`);
+        }
+        if (partes.length === 0) {
+          partes.push('No había distributivo pendiente por agendar.');
+        }
+        this.mensajeGeneracion.set(partes.join(' · '));
+
+        if (respuesta.sin_agendar.length > 0) {
+          const detalle = respuesta.sin_agendar.map((s) => `${s.codigo_distributivo_ext}: ${s.motivo}`).join('\n');
+          console.warn('Distributivo sin agendar:\n' + detalle);
+        }
       },
       error: (err) => {
         this.errorMatriz.set(err?.mensajeAmigable ?? 'No se pudo generar el horario.');
