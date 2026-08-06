@@ -12,6 +12,7 @@ import {
   Paralelo,
   PropuestaHorario,
   PropuestaMoverBloque,
+  ResultadoGeneracion,
   ResultadoImportacion,
   ResultadoRevalidacionPeriodo,
   ResultadoValidacionBloque,
@@ -97,6 +98,9 @@ export class ApiService {
       `${this.base}/horarios/validar-periodo/${periodoAcademico}`,
       {},
     );
+  }
+  generarAutomatico(periodoAcademico: string) {
+    return this.http.post<ResultadoGeneracion>(`${this.base}/horarios/generar/${periodoAcademico}`, {});
   }
   vaciarPeriodo(periodoAcademico: string) {
     return this.http.delete<{ estado: string; periodo_academico: string; eliminados: number }>(
