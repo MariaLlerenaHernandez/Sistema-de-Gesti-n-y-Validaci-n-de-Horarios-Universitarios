@@ -21,8 +21,8 @@ const HORA_INICIO_CALENDARIO = 7;
 const HORA_FIN_CALENDARIO = 19;
 const ALTO_FILA_PX = 52;
 
-interface OpcionDistributivo {
-  distributivo_id: number;
+interface OpcionSimple {
+  id: number;
   etiqueta: string;
 }
 
@@ -59,34 +59,87 @@ export class HorariosComponent implements OnInit {
   paralelos = signal<Paralelo[]>([]);
   cargandoCatalogos = signal(true);
 
-  /** Distributivo con nombres reales en vez de IDs sueltos, para el <select>. */
-  opcionesDistributivo = computed<OpcionDistributivo[]>(() => {
+  // --- Combos encadenados: Docente -> Asignatura -> Paralelo -----------
+  // Cada uno se arma a partir del distributivo ya cargado (mismo dato que
+  // antes usaba el combo unico), asi que el Excel no cambia en nada.
+
+  /** Docentes que tienen algo en el distributivo de este periodo. */
+  opcionesDocentesDistributivo = computed<OpcionSimple[]>(() => {
     const docentesPorId = new Map(this.docentes().map((d) => [d.docente_id, d]));
-    const asignaturasPorId = new Map(this.asignaturas().map((a) => [a.asignatura_id, a]));
-    const paralelosPorId = new Map(this.paralelos().map((p) => [p.paralelo_id, p]));
-
-    return this.distributivos()
-      .filter((d) => d.periodo_academico === this.periodo)
-      .map((d) => {
-        const docente = docentesPorId.get(d.docente_id);
-        const asignatura = asignaturasPorId.get(d.asignatura_id);
-        const paralelo = paralelosPorId.get(d.paralelo_id);
-
-        const nombreDocente = docente ? `${docente.nombres} ${docente.apellidos}` : `Docente #${d.docente_id}`;
-        const nombreAsignatura = asignatura ? asignatura.nombre_asignatura : `Asignatura #${d.asignatura_id}`;
-        const codigoParalelo = paralelo ? paralelo.codigo_paralelo : '';
-
-        return {
-          distributivo_id: d.distributivo_id,
-          etiqueta: `${nombreAsignatura} (${codigoParalelo}) — ${nombreDocente}`,
-        };
+    const idsUnicos = new Set(
+      this.distributivos()
+        .filter((d) => d.periodo_academico === this.periodo)
+        .map((d) => d.docente_id),
+    );
+    return Array.from(idsUnicos)
+      .map((id) => {
+        const docente = docentesPorId.get(id);
+        return { id, etiqueta: docente ? `${docente.nombres} ${docente.apellidos}` : `Docente #${id}` };
       })
       .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta));
   });
 
+  /** Asignaturas que ese docente dicta segun el distributivo (se filtra solo al elegir docente). */
+  opcionesAsignaturasDelDocente = computed<OpcionSimple[]>(() => {
+    const docenteId = this.form().docente_id;
+    if (!docenteId) return [];
+    const asignaturasPorId = new Map(this.asignaturas().map((a) => [a.asignatura_id, a]));
+    const idsUnicos = new Set(
+      this.distributivos()
+        .filter((d) => d.periodo_academico === this.periodo && d.docente_id === Number(docenteId))
+        .map((d) => d.asignatura_id),
+    );
+    return Array.from(idsUnicos)
+      .map((id) => {
+        const asignatura = asignaturasPorId.get(id);
+        return { id, etiqueta: asignatura ? asignatura.nombre_asignatura : `Asignatura #${id}` };
+      })
+      .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta));
+  });
+
+  /** Paralelos de esa asignatura, dictados por ese mismo docente (se filtra solo al elegir asignatura). */
+  opcionesParalelosDeAsignatura = computed<OpcionSimple[]>(() => {
+    const docenteId = this.form().docente_id;
+    const asignaturaId = this.form().asignatura_id;
+    if (!docenteId || !asignaturaId) return [];
+    const paralelosPorId = new Map(this.paralelos().map((p) => [p.paralelo_id, p]));
+    const idsUnicos = new Set(
+      this.distributivos()
+        .filter(
+          (d) =>
+            d.periodo_academico === this.periodo &&
+            d.docente_id === Number(docenteId) &&
+            d.asignatura_id === Number(asignaturaId),
+        )
+        .map((d) => d.paralelo_id),
+    );
+    return Array.from(idsUnicos)
+      .map((id) => {
+        const paralelo = paralelosPorId.get(id);
+        return { id, etiqueta: paralelo ? `Paralelo ${paralelo.codigo_paralelo}` : `Paralelo #${id}` };
+      })
+      .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta));
+  });
+
+  /** Una vez elegidos los 3, el distributivo_id real que le corresponde (el mismo dato que se manda al backend). */
+  distributivoResuelto = computed<number | null>(() => {
+    const { docente_id, asignatura_id, paralelo_id } = this.form();
+    if (!docente_id || !asignatura_id || !paralelo_id) return null;
+    const encontrado = this.distributivos().find(
+      (d) =>
+        d.periodo_academico === this.periodo &&
+        d.docente_id === Number(docente_id) &&
+        d.asignatura_id === Number(asignatura_id) &&
+        d.paralelo_id === Number(paralelo_id),
+    );
+    return encontrado ? encontrado.distributivo_id : null;
+  });
+
   // --- Formulario de propuesta ---------------------------------------
   form = signal({
-    distributivo_id: '',
+    docente_id: '',
+    asignatura_id: '',
+    paralelo_id: '',
     espacio_id: '',
     dia_semana: 'LUNES' as DiaSemana,
     hora_inicio: '07:00',
@@ -200,6 +253,20 @@ export class HorariosComponent implements OnInit {
     });
   }
 
+  // --- Seleccion de los 3 combos encadenados ---------------------------
+
+  seleccionarDocente(id: string): void {
+    this.form.update((f) => ({ ...f, docente_id: id, asignatura_id: '', paralelo_id: '' }));
+  }
+
+  seleccionarAsignatura(id: string): void {
+    this.form.update((f) => ({ ...f, asignatura_id: id, paralelo_id: '' }));
+  }
+
+  seleccionarParalelo(id: string): void {
+    this.form.update((f) => ({ ...f, paralelo_id: id }));
+  }
+
   actualizarCampo<K extends keyof ReturnType<HorariosComponent['form']>>(
     campo: K,
     valor: ReturnType<HorariosComponent['form']>[K],
@@ -209,9 +276,14 @@ export class HorariosComponent implements OnInit {
 
   enviarPropuesta(): void {
     const datos = this.form();
+    const distributivoId = this.distributivoResuelto();
 
-    if (!datos.distributivo_id || !datos.espacio_id) {
-      this.errorFormulario.set('Completa el registro del distributivo y el espacio físico.');
+    if (!distributivoId) {
+      this.errorFormulario.set('Selecciona docente, asignatura y paralelo (una combinación válida).');
+      return;
+    }
+    if (!datos.espacio_id) {
+      this.errorFormulario.set('Selecciona el espacio físico.');
       return;
     }
     if (datos.hora_fin <= datos.hora_inicio) {
@@ -225,7 +297,7 @@ export class HorariosComponent implements OnInit {
 
     this.api
       .proponerHorario({
-        distributivo_id: datos.distributivo_id as unknown as number,
+        distributivo_id: distributivoId,
         espacio_id: datos.espacio_id as unknown as number,
         dia_semana: datos.dia_semana,
         hora_inicio: datos.hora_inicio,
